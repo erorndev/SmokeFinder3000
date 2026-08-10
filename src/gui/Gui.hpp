@@ -11,6 +11,7 @@ namespace Gui {
   bool IsInitialized();
   bool IsMenuOpen();
   void ToggleMenu();
+  bool ShouldUnload();
   LRESULT WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
   HWND GetWindow();
   WNDPROC GetOriginalWndProc();

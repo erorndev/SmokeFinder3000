@@ -9,6 +9,11 @@ DWORD WINAPI MainThread(LPVOID lpParam) {
     if (GetAsyncKeyState(VK_INSERT) & 1) {
       Gui::ToggleMenu();
     }
+
+    if (Gui::ShouldUnload()) {
+      break;
+    }
+
     Sleep(100);
   }
 

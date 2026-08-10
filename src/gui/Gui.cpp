@@ -16,6 +16,8 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd,
                                                              WPARAM wParam,
                                                              LPARAM lParam);
 
+static bool g_ShouldUnload = false;
+
 void SetupImGuiStyle() {
   ImGuiStyle& style = ImGui::GetStyle();
 
@@ -184,11 +186,6 @@ namespace Gui {
 
   static void AttachToSwapChain(IDXGISwapChain* pSwapChain) {
     if (g_Initialized) {
-      CleanupRenderTarget();
-      ImGui_ImplDX11_Shutdown();
-      ImGui_ImplWin32_Shutdown();
-      ImGui::DestroyContext();
-
       if (g_hWnd && g_oWndProc) {
         WNDPROC current =
             reinterpret_cast<WNDPROC>(GetWindowLongPtr(g_hWnd, GWLP_WNDPROC));
@@ -196,6 +193,11 @@ namespace Gui {
           SetWindowLongPtr(g_hWnd, GWLP_WNDPROC,
                            reinterpret_cast<LONG_PTR>(g_oWndProc));
       }
+
+      CleanupRenderTarget();
+      ImGui_ImplDX11_Shutdown();
+      ImGui_ImplWin32_Shutdown();
+      ImGui::DestroyContext();
 
       if (g_pd3dContext) {
         g_pd3dContext->Release();
@@ -332,7 +334,10 @@ namespace Gui {
           ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
 
       ImGui::Text("SmokeFinder3000");
-
+      if (ImGui::Button("Unload Overlay")) {
+        g_ShowMenu = false;
+        g_ShouldUnload = true;
+      }
       ImGui::End();
     }
 
@@ -526,14 +531,12 @@ namespace Gui {
   }
 
   void Shutdown() {
+    MH_DisableHook(MH_ALL_HOOKS);
+    MH_Uninitialize();
+
     if (g_CSInit) EnterCriticalSection(&g_CS);
 
     if (g_Initialized) {
-      CleanupRenderTarget();
-      ImGui_ImplDX11_Shutdown();
-      ImGui_ImplWin32_Shutdown();
-      ImGui::DestroyContext();
-
       if (g_hWnd && g_oWndProc) {
         WNDPROC currentWndProc =
             reinterpret_cast<WNDPROC>(GetWindowLongPtr(g_hWnd, GWLP_WNDPROC));
@@ -541,6 +544,11 @@ namespace Gui {
           SetWindowLongPtr(g_hWnd, GWLP_WNDPROC,
                            reinterpret_cast<LONG_PTR>(g_oWndProc));
       }
+
+      CleanupRenderTarget();
+      ImGui_ImplDX11_Shutdown();
+      ImGui_ImplWin32_Shutdown();
+      ImGui::DestroyContext();
 
       if (g_pd3dContext) {
         g_pd3dContext->Release();
@@ -556,9 +564,6 @@ namespace Gui {
 
     if (g_CSInit) LeaveCriticalSection(&g_CS);
 
-    MH_DisableHook(MH_ALL_HOOKS);
-    MH_Uninitialize();
-
     if (g_CSInit) {
       DeleteCriticalSection(&g_CS);
       g_CSInit = false;
@@ -571,4 +576,5 @@ namespace Gui {
   bool IsInitialized() { return g_Initialized; }
   bool IsMenuOpen() { return g_ShowMenu; }
   void ToggleMenu() { g_ShowMenu = !g_ShowMenu; }
+  bool ShouldUnload() { return g_ShouldUnload; }
 }  // namespace Gui
