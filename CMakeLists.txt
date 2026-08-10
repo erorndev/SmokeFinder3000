@@ -5,6 +5,7 @@ project(SmokeFinder3000 LANGUAGES CXX C)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if(NOT MSVC)
     message(FATAL_ERROR "Please use a compiler that supports the MSVC ABI.")
