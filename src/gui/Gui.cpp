@@ -6,7 +6,7 @@
 #include <cfloat>
 #include <string>
 
-#include "../game/Schema.hpp"
+#include "../game/Commons.hpp"
 #include "imgui.h"
 #include "imgui_impl_dx11.h"
 #include "imgui_impl_win32.h"
@@ -329,14 +329,190 @@ namespace Gui {
     ImGui::NewFrame();
 
     if (g_ShowMenu) {
-      ImGui::Begin(
-          "SmokeFinder3000", &g_ShowMenu,
-          ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
+      ImGui::SetNextWindowSize(ImVec2(680.0f, 480.0f), ImGuiCond_FirstUseEver);
+      if (ImGui::Begin("SmokeFinder3000", &g_ShowMenu,
+                       ImGuiWindowFlags_NoCollapse)) {
+        static int activeTab = 0;
 
-      ImGui::Text("SmokeFinder3000");
-      if (ImGui::Button("Unload Overlay")) {
-        g_ShowMenu = false;
-        g_ShouldUnload = true;
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 6.0f);
+        if (ImGui::Button("    Solver    ", ImVec2(140, 32))) activeTab = 0;
+        ImGui::SameLine();
+        if (ImGui::Button("  Map Loader  ", ImVec2(140, 32))) activeTab = 1;
+        ImGui::SameLine();
+        if (ImGui::Button("   Settings   ", ImVec2(140, 32))) activeTab = 2;
+        ImGui::PopStyleVar();
+
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        if (activeTab == 0) {
+          ImGui::Columns(2, "LineupColumns", true);
+          ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f),
+                             "Target Selection & Player Position");
+          ImGui::Spacing();
+
+          static bool isSelectingSpot = false;
+          static float targetPos[3] = {1240.0f, -850.0f, -120.0f};
+          static bool hasTargetSpot = true;
+
+          if (isSelectingSpot) {
+            ImGui::PushStyleColor(ImGuiCol_Button,
+                                  ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
+            if (ImGui::Button("Cancel Spot Selection (ESC)", ImVec2(-1, 32))) {
+              isSelectingSpot = false;
+            }
+            ImGui::PopStyleColor();
+            ImGui::TextColored(
+                ImVec4(1.0f, 0.8f, 0.2f, 1.0f),
+                "Freecam active: Click anywhere in-game to set spot");
+          } else {
+            if (ImGui::Button("Set Target Smoke Spot", ImVec2(-1, 32))) {
+              isSelectingSpot = true;
+            }
+          }
+
+          if (hasTargetSpot) {
+            ImGui::Text("Target: (%.1f, %.1f, %.1f)", targetPos[0],
+                        targetPos[1], targetPos[2]);
+          } else {
+            ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f),
+                               "Target: Not Set (Click button above)");
+          }
+
+          ImGui::Spacing();
+          ImGui::Separator();
+          ImGui::Spacing();
+
+          static float playerPos[3] = {-412.5f, 1680.2f, -159.0f};
+          static bool lockPlayerPos = false;
+
+          ImGui::Text("Player Standing Position:");
+          ImGui::Text("X: %.1f  Y: %.1f  Z: %.1f", playerPos[0], playerPos[1],
+                      playerPos[2]);
+          ImGui::Checkbox("Lock Current Standing Position", &lockPlayerPos);
+
+          ImGui::Spacing();
+          static int throwType = 0;
+          const char* throwTypes[] = {"Standing Jumpthrow", "Standing Regular",
+                                      "Running Jumpthrow", "Walking Throw"};
+          ImGui::Combo("Throw Type", &throwType, throwTypes,
+                       IM_ARRAYSIZE(throwTypes));
+
+          ImGui::Spacing();
+          ImGui::Separator();
+          ImGui::Spacing();
+
+          ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.2f, 1.0f), "Solver Settings");
+          ImGui::Spacing();
+
+          static int maxIterations = 100;
+          ImGui::SliderInt("Max Optimization Steps", &maxIterations, 10, 300);
+
+          static float convergenceTol = 1.0f;
+          ImGui::SliderFloat("Target Distance Tol (u)", &convergenceTol, 0.1f,
+                             10.0f, "%.1f u");
+
+          static float explorationWeight = 0.5f;
+          ImGui::SliderFloat("Exploration Balance", &explorationWeight, 0.0f,
+                             1.0f, "%.2f");
+
+          static float searchRadius = 15.0f;
+          ImGui::SliderFloat("Initial Angle Bounds (±°)", &searchRadius, 5.0f,
+                             45.0f, "%.0f°");
+
+          ImGui::Spacing();
+          if (ImGui::Button("Run Solver", ImVec2(-1, 35))) {
+            // UI Action placeholder
+          }
+
+          ImGui::NextColumn();
+
+          ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f),
+                             "Optimal Smoke Solution");
+          ImGui::Spacing();
+
+          ImGui::BeginChild("SolutionChild", ImVec2(0, 310), true);
+          ImGui::Text("Solver Status: Optimal Lineup Found");
+          ImGui::Text("Required Pitch: -42.85°");
+          ImGui::Text("Required Yaw:   114.30°");
+          ImGui::Text("Miss Distance:  0.4 units");
+          ImGui::Text("Black-Box Steps Run: 42 / 100");
+
+          ImGui::Spacing();
+          ImGui::Separator();
+          ImGui::Spacing();
+
+          static bool showCrosshairGuide = true;
+          static bool showTrajectoryPreview = true;
+          static bool autoAlign = false;
+
+          ImGui::Checkbox("Draw HUD Alignment Reticle", &showCrosshairGuide);
+          ImGui::Checkbox("Draw World Trajectory Arc", &showTrajectoryPreview);
+          ImGui::Checkbox("Snap Crosshair On Key", &autoAlign);
+
+          ImGui::Spacing();
+          ImGui::Separator();
+          ImGui::Spacing();
+
+          ImGui::Text("Surrogate Convergence (EI):");
+          static float mockProgress = 0.85f;
+          ImGui::ProgressBar(mockProgress, ImVec2(-1, 0), "EI Delta: 0.0014");
+
+          ImGui::EndChild();
+
+          ImGui::Columns(1);
+
+        } else if (activeTab == 1) {
+          ImGui::TextColored(ImVec4(0.4f, 0.9f, 1.0f, 1.0f), "Map Loader");
+          ImGui::TextWrapped(
+              "Launches a local practice session configured for lineup "
+              "testing.");
+          ImGui::Spacing();
+          ImGui::Separator();
+          ImGui::Spacing();
+
+          static int practiceMap = 0;
+          const char* practiceMaps[] = {"de_mirage", "de_inferno", "de_nuke",
+                                        "de_anubis", "de_ancient", "de_dust2",
+                                        "de_vertigo"};
+          ImGui::Combo("Select Map", &practiceMap, practiceMaps,
+                       IM_ARRAYSIZE(practiceMaps));
+
+          ImGui::Spacing();
+          ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.3f, 1.0f), "Settings:");
+
+          static bool kickBots = true;
+          static bool infiniteWarmup = true;
+          static bool infiniteAmmo = true;
+          static bool enableCheats = true;
+          static bool showImpacts = true;
+
+          ImGui::Checkbox("Kick All Bots", &kickBots);
+          ImGui::Checkbox("Infinite Practice Prep", &infiniteWarmup);
+          ImGui::Checkbox("Infinite Grenades / Ammo", &infiniteAmmo);
+          ImGui::Checkbox("Enable Practice Cheats", &enableCheats);
+          ImGui::Checkbox("Show Bullet & Grenade Impacts", &showImpacts);
+
+          ImGui::Spacing();
+          ImGui::Separator();
+          ImGui::Spacing();
+
+          if (ImGui::Button("Load Map", ImVec2(260, 38))) {
+            // UI Action placeholder
+          }
+          ImGui::SameLine();
+        } else if (activeTab == 2) {
+          // --- Settings Tab ---
+          ImGui::TextColored(ImVec4(0.9f, 0.9f, 0.9f, 1.0f), "Overlay");
+          ImGui::Spacing();
+          ImGui::Separator();
+          ImGui::Spacing();
+
+          if (ImGui::Button("Unload Overlay", ImVec2(240, 32))) {
+            g_ShowMenu = false;
+            g_ShouldUnload = true;
+          }
+        }
       }
       ImGui::End();
     }
