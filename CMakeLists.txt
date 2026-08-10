@@ -12,7 +12,7 @@ endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     add_compile_options(/utf-8)
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 endif()
 
 
@@ -24,7 +24,7 @@ add_subdirectory(${MINHOOK_DIR} ${CMAKE_BINARY_DIR}/minhook-build)
 
 if(MSVC)
     set_target_properties(minhook PROPERTIES
-        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL"
     )
 endif()
 
@@ -53,5 +53,4 @@ target_link_libraries(SmokeFinder3000 PRIVATE
     minhook
     d3d11
     dxgi
-    psapi
 )
