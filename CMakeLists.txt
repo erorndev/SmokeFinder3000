@@ -40,6 +40,9 @@ add_library(SmokeFinder3000 SHARED
     src/Main.cpp
     src/Dll.cpp
     src/gui/Gui.cpp
+    src/game/Interfaces.cpp
+    src/game/Game.cpp
+    src/game/PatternScan.cpp
 )
 
 # Include
